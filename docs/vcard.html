@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Card</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load QRious library for QR code generation -->
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <!-- Use Inter font family -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Using a very soft, warm background color for the overall page */
+            background-color: #f0fdfa; /* teal-50, keeping this subtle */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 10vh;
+            padding: 2rem 1rem;
+        }
+        .card-shadow {
+            /* Stronger, diffused shadow for a premium, lifted feel */
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 8px 12px -4px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Card Container: Reverting background to white -->
+    <div class="w-full max-w-sm mx-auto bg-white rounded-2xl overflow-hidden card-shadow transform transition duration-300 ease-in-out hover:scale-[1.02]">
+
+        <!-- Profile Header Section: Theme color remains cyan-700 (#0891b2) -->
+        <div class="bg-cyan-700 p-8 text-white text-center">
+            <!-- Container for Profile Image / Placeholder -->
+            <div id="photoContainer" class="w-28 h-28 mx-auto rounded-full border-4 border-white shadow-xl mb-4 flex items-center justify-center">
+                <!-- Profile picture or placeholder will be dynamically injected here by JS -->
+            </div>
+            <h1 id="cardName" class="text-2xl font-extrabold"></h1>
+            <!-- Secondary text color adjusted for better contrast on the cyan-700 header -->
+            <p id="cardTitle" class="text-cyan-200 mt-1 font-medium"></p>
+        </div>
+
+        <!-- QR Code Description Section (Keeps horizontal padding for alignment) -->
+        <div class="pt-6 px-6 flex flex-col items-center justify-center">
+            <p class="text-sm text-cyan-800 font-semibold mb-3">Scan to save contact details</p>
+        </div>
+
+        <!-- QR Code Canvas Section (Wrapper has no horizontal padding) -->
+        <div class="w-full pb-4 border-b border-gray-100 flex items-center justify-center">
+            <canvas id="qrcodeCanvas" class="w-[95%] aspect-square bg-white rounded-lg"></canvas>
+        </div>
+
+        <!-- Contact & Bio Section (Still uses p-6/px-6) -->
+        <div class="p-6">
+            <!-- Updated header text color -->
+            <h2 class="text-lg font-bold text-cyan-800 border-b pb-2 mb-4">Connect</h2>
+
+            <div class="space-y-4">
+
+                <!-- Email (Work) with Copy Button -->
+                <div class="flex items-center justify-between group">
+                    <!-- Updated hover text color -->
+                    <a id="emailLink" href="" class="flex items-center text-gray-700 hover:text-cyan-700 transition duration-150 min-w-0 flex-grow">
+                        <!-- Updated icon color -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-cyan-500 group-hover:text-cyan-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <span id="emailText" class="truncate"></span>
+                    </a>
+                    <!-- Updated hover background color -->
+                    <button onclick="copyEmail()" class="copy-button p-2 -mr-2 rounded-full hover:bg-cyan-50 transition duration-150 flex items-center justify-center flex-shrink-0" aria-label="Copy email address">
+                        <div id="emailCopyIcon">
+                            <!-- Updated hover icon color -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 hover:text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3.5a1 1 0 011-1h11a1 1 0 011 1V15a1 1 0 01-1 1h-3M6 10H3.5a1 1 0 00-1 1v11a1 1 0 001 1h11a1 1 0 001-1v-3" />
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+
+
+                <!-- Phone (Work - Displayed) with Copy Button -->
+                <div class="flex items-center justify-between group">
+                    <!-- Updated hover text color -->
+                    <a id="phoneLink" href="" class="flex items-center text-gray-700 hover:text-cyan-700 transition duration-150 min-w-0 flex-grow">
+                        <!-- Updated icon color -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-cyan-500 group-hover:text-cyan-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.5l1.5 5 4.5-4.5 5 1.5V19a2 2 0 01-2 2H5a2 2 0 01-2-2V5z" />
+                        </svg>
+                        <span id="phoneText"></span>
+                        <span class="text-xs text-gray-400 ml-2"> (Work)</span>
+                    </a>
+                    <!-- Updated hover background color -->
+                    <button onclick="copyPhone()" class="copy-button p-2 -mr-2 rounded-full hover:bg-cyan-50 transition duration-150 flex items-center justify-center flex-shrink-0" aria-label="Copy phone number">
+                        <div id="phoneCopyIcon">
+                             <!-- Updated hover icon color -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 hover:text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3.5a1 1 0 011-1h11a1 1 0 011 1V15a1 1 0 01-1 1h-3M6 10H3.5a1 1 0 00-1 1v11a1 1 0 001 1h11a1 1 0 001-1v-3" />
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Address (Map Link) -->
+                <!-- Updated hover background color -->
+                <a id="addressLink" href="" target="_blank" class="flex items-center justify-between p-3 -mx-3 rounded-lg text-gray-700 hover:bg-cyan-50 transition duration-150 group">
+                    <div class="flex items-center min-w-0 flex-grow">
+                        <!-- Updated icon color -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-cyan-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span id="addressText" class="truncate font-medium"></span>
+                    </div>
+                    <!-- Updated hover icon color -->
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5 ml-3 text-gray-400 group-hover:text-cyan-700 flex-shrink-0"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                </a>
+            </div>
+
+            <!-- Save Contact Button: Updated colors to match cyan theme -->
+            <button onclick="downloadVCard()" class="w-full my-6 bg-cyan-700 text-white py-3 rounded-xl font-bold hover:bg-cyan-800 transition duration-200 shadow-lg focus:outline-none focus:ring-4 focus:ring-cyan-700 focus:ring-opacity-50 tracking-wider">
+                Save Contact
+            </button>
+
+            <!-- Social Links: Forced into a single, responsive row -->
+            <div id="socialLinksContainer" class="flex gap-4 justify-around pt-2">
+                <!-- Social links will be injected here -->
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // --- START OF CONFIGURATION DATA (YAML/JSON Equivalent) ---
+        // Edit this object to update all card content.
+        const cardData = {
+            name: "Dr. Pushpa Choudhary",
+            title: "Faculty at IIT Indore",
+            workEmail: "pushpa@iiti.ac.in",
+            workPhone: {
+                display: "+91-731-660-5172",
+                href: "+917316605172"
+            },
+            personalPhone: {
+                display: "+91-7597236720",
+                href: "+917597236720"
+            },
+            address: {
+                // Updated address to reflect IIT Indore location
+                display: "Room no. C-10, Learning Resource Center (LRC), Indian Institute of Technology Indore, Simrol, Indore, Madhya Pradesh, 453552, India",
+                street: "Room no. C-10, Learning Resource Center (LRC), Indian Institute of Technology Indore, Simrol",
+                city: "Indore",
+                state: "Madhya Pradesh",
+                zip: "453552",
+                country: "India",
+                // Updated coordinates from 22°31'42.7"N 75°55'20.7"E
+                lat: 22.528527,
+                lng: 75.922417
+            },
+            // CHANGE THIS URL to your actual photo link.
+            photoUrl: "https://choudharypushpa.github.io/HumanFRSTLab/assets/team/Pushpa.jpg",
+            social: [
+                {
+                    label: "Profile",
+                    url: "https://choudharypushpa.github.io/HumanFRSTLab/pages/team/faculty/pushpa.html",
+                    // The default icon color is updated here
+                    iconSvg: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9.25 21H14.75L14.25 17H9.75ZM18 10H6C4.895 10 4 9.105 4 8V6C4 4.895 4.895 4 6 4H18C19.105 4 20 4.895 20 6V8C20 9.105 19.105 10 18 10ZM12 17V10"/></svg>'
+                },
+                {
+                    label: "Lab Page",
+                    url: "https://choudharypushpa.github.io/HumanFRSTLab/",
+                    // The default icon color is updated here
+                    iconSvg: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9.25 21H14.75L14.25 17H9.75ZM18 10H6C4.895 10 4 9.105 4 8V6C4 4.895 4.895 4 6 4H18C19.105 4 20 4.895 20 6V8C20 9.105 19.105 10 18 10ZM12 17V10"/></svg>'
+                },
+                {
+                    label: "LinkedIn",
+                    url: "https://www.linkedin.com/in/pushpa-choudhary-350b5aa1",
+                    iconSvg: '<svg class="w-6 h-6 text-blue-700" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.535-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>'
+                },
+                {
+                    label: "GitHub",
+                    url: "https://github.com/choudharypushpa",
+                    iconSvg: '<svg class="w-6 h-6 text-gray-800" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.6.11.82-.26.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.543-1.372-1.326-1.743-1.326-1.743-1.087-.745.084-.73.084-.73 1.205.084 1.838 1.237 1.838 1.237 1.07 1.834 2.809 1.305 3.493.998.108-.77.42-1.305.762-1.604-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.47-2.38 1.236-3.22-.124-.302-.533-1.52.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.4 3.003-.404 1.02.004 2.046.138 3.003.404 2.293-1.552 3.3-1.23 3.3-1.23.65 1.656.242 2.874.118 3.176.765.84 1.234 1.91 1.234 3.22 0 4.61-2.805 5.625-5.474 5.922.43.37.823 1.102.823 2.222 0 1.604-.015 2.894-.015 3.284 0 .318.217.694.825.575C20.565 21.796 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>'
+                },
+                {
+                    label: "G Scholar",
+                    url: "https://scholar.google.co.in/citations?user=unUZoZAAAAAJ&hl=en",
+                    // New SVG mimicking the official Google Scholar icon (mortarboard in green)
+                    iconSvg: '<svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L2 8v2l10 5 10-5v-2L12 3zM2 13v6l10 5 10-5v-6l-10 5L2 13z"/></svg>'
+                }
+            ]
+        };
+        // --- END OF CONFIGURATION DATA ---
+
+        /**
+         * Safely copies text to clipboard and provides visual feedback.
+         * @param {string} text The text to copy.
+         * @param {string} iconContainerId The ID of the div containing the icon to update for feedback.
+         */
+        function copyTextToClipboard(text, iconContainerId) {
+            const tempInput = document.createElement('input');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+
+            let success = false;
+            try {
+                success = document.execCommand('copy');
+                if (success) {
+                    showCopyFeedback(iconContainerId);
+                } else {
+                    console.error('Copy command failed via execCommand.');
+                }
+            } catch (err) {
+                console.error('Copy command failed:', err);
+            }
+
+            document.body.removeChild(tempInput);
+        }
+
+        /**
+         * Provides temporary visual feedback (changes icon to a green checkmark).
+         */
+        function showCopyFeedback(elementId) {
+            const iconContainer = document.getElementById(elementId);
+            if (!iconContainer) return;
+
+            // Define the original icon content (copy icon)
+            const originalIcon = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 hover:text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3.5a1 1 0 011-1h11a1 1 0 011 1V15a1 1 0 01-1 1h-3M6 10H3.5a1 1 0 00-1 1v11a1 1 0 001 1h11a1 1 0 001-1v-3" />
+                </svg>
+            `;
+
+            // Success Icon (Checkmark in a circle)
+            const successIcon = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.532-1.676-1.676a.75.75 0 00-1.06 1.06l2.22 2.22a.75.75 0 001.24-.04L15.61 10.686z" clip-rule="evenodd" />
+                </svg>
+            `;
+
+            iconContainer.innerHTML = successIcon;
+
+            // Restore original icon after 1.5 seconds
+            setTimeout(() => {
+                iconContainer.innerHTML = originalIcon;
+            }, 1500);
+        }
+
+        function copyEmail() {
+            copyTextToClipboard(cardData.workEmail, 'emailCopyIcon');
+        }
+
+        function copyPhone() {
+            const cleanPhone = cardData.workPhone.href.replace('+', '');
+            copyTextToClipboard(cleanPhone, 'phoneCopyIcon');
+        }
+
+        /**
+         * Generates the VCard string (VCF format) from the cardData object.
+         */
+        function generateVCardString() {
+            // Logic remains the same as previous version for VCard generation
+            const fullName = cardData.name.trim();
+            let nameParts = fullName.split(' ');
+            let prefix = '';
+
+            if (nameParts[0].toLowerCase().endsWith('.')) {
+                prefix = nameParts.shift();
+            }
+
+            const lastName = nameParts.length > 1 ? nameParts.pop() : fullName;
+            const firstName = nameParts.join(' ');
+            const formattedName = cardData.name;
+            const title = cardData.title;
+
+            const workEmail = cardData.workEmail;
+            const workPhoneNumber = cardData.workPhone.href ? cardData.workPhone.href.replace('+91', '0') : null;
+            const personalPhoneNumber = cardData.personalPhone.href ? cardData.personalPhone.href.replace('+91', '') : null;
+            const address = cardData.address;
+
+            const vcardAddress = address.display ?
+                `ADR;TYPE=WORK:;;${address.street.replace(/\n/g, '\\n')};${address.city};${address.state};${address.zip};${address.country}` : '';
+
+            const vcardGeo = (address.lat && address.lng) ? `GEO:${address.lat},${address.lng}` : '';
+
+            const socialUrls = cardData.social.map(s => {
+                return `URL;TYPE=${s.label.toUpperCase().replace(/\s/g, '-')}:${s.url}`;
+            }).join('\n');
+
+            const vcard = `BEGIN:VCARD
+VERSION:3.0
+N:${lastName};${firstName};;;${prefix}
+FN:${formattedName}
+TITLE:${title}
+${workPhoneNumber ? `TEL;TYPE=WORK,VOICE:${workPhoneNumber}` : ''}
+${personalPhoneNumber ? `TEL;TYPE=HOME,VOICE:${personalPhoneNumber}` : ''}
+EMAIL;TYPE=INTERNET,WORK:${workEmail}
+${vcardAddress}
+${vcardGeo}
+${socialUrls}
+END:VCARD`;
+
+            return vcard;
+        }
+
+        /**
+         * Triggers the download of the VCard (VCF) file.
+         */
+        function downloadVCard() {
+            const vcard = generateVCardString();
+            const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            const nameWithoutPrefix = cardData.name.replace(/Dr\.\s*/i, '').trim();
+            const nameParts = nameWithoutPrefix.split(' ');
+            const lastName = nameParts.length > 1 ? nameParts.pop() : nameWithoutPrefix;
+            const firstName = nameParts.join(' ');
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${firstName.toLowerCase() || 'contact'}_${lastName.toLowerCase() || 'card'}.vcf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        /**
+         * Renders the VCard data as a QR code in the canvas element.
+         * This function ensures the QR code size matches the current canvas client width.
+         */
+        function generateQRCode() {
+            const vcardString = generateVCardString();
+            const canvas = document.getElementById('qrcodeCanvas');
+
+            if (!canvas || typeof QRious === 'undefined') return;
+
+            const size = canvas.clientWidth || 100;
+
+            // Ensure exact pixel size
+            canvas.width = size;
+            canvas.height = size;
+
+            new QRious({
+                element: canvas,
+                value: vcardString,
+                size: size,
+                level: 'L',
+                foreground: '#0891b2'
+            });
+
+        }
+
+
+        /**
+         * Dynamically creates an image element with fallback for missing or error-prone images.
+         * @param {string} url The image URL.
+         * @param {string} initials Initials for the placeholder text.
+         */
+        function createProfileImageElement(url, initials) {
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = `${cardData.name}'s Profile Picture`;
+            img.className = "rounded-full w-full h-full object-cover";
+
+            // Set up a clean error handler using JavaScript
+            img.onerror = function() {
+                // If the image fails to load, replace the container content with the placeholder
+                // Updated placeholder color to match the new cyan theme (#0891b2)
+                const placeholderColor = '0891b2';
+                const textColor = 'ffffff'; // white text
+
+                // Construct the placeholder URL without messy HTML attributes
+                const placeholderUrl = `https://placehold.co/112x112/${placeholderColor}/${textColor}?text=${initials}`;
+
+                // Create a div to hold the placeholder image (to maintain styling consistency)
+                const placeholderImg = document.createElement('img');
+                placeholderImg.src = placeholderUrl;
+                placeholderImg.alt = "Profile Initials";
+                placeholderImg.className = "rounded-full w-full h-full object-cover";
+
+                // Replace the current element (the failed <img>) with the placeholder <img>
+                this.parentElement.innerHTML = ''; // Clear container
+                this.parentElement.appendChild(placeholderImg); // Add placeholder
+
+                this.onerror = null; // Prevent infinite loop
+            };
+
+            return img;
+        }
+
+        function renderCard() {
+            // Calculate initials
+            const nameWithoutPrefix = cardData.name.replace(/Dr\.\s*/i, '').trim();
+            const initials = nameWithoutPrefix.split(' ').map(n => n[0]).join('').toUpperCase();
+
+            // Update general info
+            document.title = `${cardData.name} - Digital Business Card`;
+            document.getElementById('cardName').textContent = cardData.name;
+            document.getElementById('cardTitle').textContent = cardData.title;
+
+            // Update photo/placeholder dynamically
+            const photoContainer = document.getElementById('photoContainer');
+            photoContainer.innerHTML = ''; // Clear existing content
+            photoContainer.appendChild(createProfileImageElement(cardData.photoUrl, initials));
+
+            // Update contact info
+            document.getElementById('emailLink').href = `mailto:${cardData.workEmail}`;
+            document.getElementById('emailText').textContent = cardData.workEmail;
+
+            document.getElementById('phoneLink').href = `tel:${cardData.workPhone.href}`;
+            document.getElementById('phoneText').textContent = cardData.workPhone.display;
+
+            // Update address info
+            const address = cardData.address;
+            const fullAddress = address.display;
+            const hasCoords = address.lat && address.lng;
+
+            const mapHref = hasCoords
+                ? `https://www.google.com/maps/search/?api=1&query=${address.lat},${address.lng}`
+                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
+
+            document.getElementById('addressLink').href = mapHref;
+            document.getElementById('addressText').textContent = fullAddress;
+
+            // Update social links
+            const socialLinksContainer = document.getElementById('socialLinksContainer');
+            socialLinksContainer.innerHTML = cardData.social.map(link => {
+                 // Replace the generic color in the SVG for links that don't have a specific brand color
+                const iconHtml = link.iconSvg.includes('text-teal-500') || link.iconSvg.includes('text-emerald-500')
+                    ? link.iconSvg.replace(/text-(emerald|teal)-\d{1}00/g, 'text-cyan-600') // Use cyan-600 as the base icon color
+                    : link.iconSvg; // Keep brand colors (blue for LinkedIn, black for X/GitHub, green for Scholar)
+
+                return `
+                    <a href="${link.url}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center p-3 -mx-1 bg-cyan-50 rounded-xl flex-1 min-w-0 hover:bg-cyan-100 transition duration-150 shadow-sm">
+                        ${iconHtml}
+                        <span class="text-xs mt-1 font-semibold text-gray-700 truncate">${link.label}</span>
+                    </a>
+                `;
+            }).join('');
+
+            // Hide sections if data is missing
+            if (!cardData.workPhone.display) {
+                document.getElementById('phoneLink').parentElement.style.display = 'none';
+            }
+            if (!cardData.address.display) {
+                document.getElementById('addressLink').style.display = 'none';
+            }
+
+            // Generate the QR Code
+            generateQRCode();
+        }
+
+        // Render the card content when the window loads
+        window.onload = renderCard;
+        // Re-generate QR code on resize for responsiveness and to maintain size based on 90% width
+        window.onresize = generateQRCode;
+    </script>
+</body>
+</html>
